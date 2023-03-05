@@ -1,18 +1,24 @@
 import { PrismaClient } from "@prisma/client";
-import fastify from "fastify";
+import express from "express";
+import cors from "cors";
 import { z } from "zod";
 
-const app = fastify();
+const app = express();
 
 const prisma = new PrismaClient();
 
-app.get("/users", async () => {
+app.use(express.json());
+app.use(cors());
+
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3333;
+
+app.get("/users", async (request, response) => {
   const users = await prisma.user.findMany();
 
-  return { users };
+  return response.json(users);
 });
 
-app.post("/users", async (request, reply) => {
+app.post("/users", async (request, response) => {
   const createUserSchema = z.object({
     name: z.string(),
     email: z.string().email(),
@@ -27,12 +33,7 @@ app.post("/users", async (request, reply) => {
     },
   });
 
-  return reply.status(201).send();
+  return response.sendStatus(201);
 });
 
-app
-  .listen({
-    host: "0.0.0.0",
-    port: process.env.PORT ? Number(process.env.PORT) : 3333,
-  })
-  .then(() => console.log("HTTP Server running"));
+app.listen(PORT, () => console.log(`HTTP Server running on port ${PORT} `));
